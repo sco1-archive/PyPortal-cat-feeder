@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+[dev-packages]
+flake8-annotations = "*"
+flake8-docstrings = "*"
+flake8-import-order = "*"
+flake8-string-format = "*"
+flake8-tidy-imports = "*"
+flake8-todo = "*"
