@@ -5,10 +5,11 @@ from CatUtils import calculate_time_remaining, get_next_feeding_cycle
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 from adafruit_pyportal import PyPortal
-from cat_constants import FEEDING_THRESHOLD
+from cat_constants import FEEDING_THRESHOLD, FEED_TIME
 
 
 FOOD_LOCATION = "America/New_York"
+print("Meals Loaded: {0}".format(FEED_TIME))
 
 TEXT_COLOR = 0xFFFFFF
 EMPHASIS_COLOR = 0x4DFF00
@@ -19,10 +20,10 @@ TEXT_FIELDS = {
     "bottom": (65, 200, "69:69", EMPHASIS_COLOR),
 }
 
-
 # Initialize display
-board.DISPLAY.auto_brightness = True
+board.DISPLAY.auto_brightness = False
 pyportal = PyPortal(status_neopixel=board.NEOPIXEL, default_bg=BACKGROUND_COLOR)
+pyportal.set_backlight(0.4)
 big_font = bitmap_font.load_font("./fonts/Nunito-Light-75.bdf")
 big_font.load_glyphs(b"0123456789adefikmnorstxBDT: ")  # pre-load glyphs for fast printing
 
@@ -39,18 +40,18 @@ for row_name, spec in TEXT_FIELDS.items():
 refresh_time = None
 while True:
     # Sync device time with the internet once per hour (or at startup)
-    if (not refresh_time) or (time.monotonic() - refresh_time) > 3600:
+    if not refresh_time or (time.monotonic() - refresh_time) > 3600:
         try:
-            print("Getting time from internet!")
             pyportal.get_local_time(location=FOOD_LOCATION)
             refresh_time = time.monotonic()
         except RuntimeError as e:
-            print("Some error occured, retrying! -", e)
+            print("Error fetching local time, retrying! -", e)
             continue
 
     current_time = time.localtime()
-    print("Current time in", FOOD_LOCATION, ":", current_time)
     target_time, meal_str = get_next_feeding_cycle(current_time)
+    print("Local time: {0:>02}{1:>02}".format(current_time[3], current_time[4]), end=", ")
+    print("Next meal: {0} @ {1:>02}{2:>02}".format(meal_str[0], target_time[3], target_time[4]))
 
     total_sec_remaining, hours_remaining, mins_remaining = calculate_time_remaining(
         current_time, target_time
@@ -59,8 +60,9 @@ while True:
         # Activate feeding screen & turn food container
         print("ACTIVATE FOOD!")
         pyportal.set_background(0xFF0000)
-        time.sleep(30)  # Simulate food time
+        time.sleep(FEEDING_THRESHOLD + 10)  # Simulate food time
         pyportal.set_background(BACKGROUND_COLOR)
+        continue
     else:
         # Update target meal & x location if it has changed
         if text_areas["middle"].text != meal_str[0]:
@@ -68,7 +70,7 @@ while True:
             text_areas["middle"].x = meal_str[1]
 
         # Update clock
-        text_areas["bottom"].text = "{:>02}:{:>02}".format(hours_remaining, mins_remaining)
+        text_areas["bottom"].text = "{0:>02}:{1:>02}".format(hours_remaining, mins_remaining)
 
     # Update every 30 seconds
     time.sleep(30)

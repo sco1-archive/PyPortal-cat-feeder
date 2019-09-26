@@ -13,7 +13,7 @@ def time_builder(in_time, meal):
 
 
 def get_next_feeding_cycle(current_time):
-    # type: (time.struct_time) -> Tuple[time.struct_time, Tuple[str, int]]
+    # type: (time.struct_time) -> Tuple[time.struct_time, Tuple[str, int]]  # noqa:F821
     """
     Determine the upcoming food cycle based on the current time.
 
@@ -25,8 +25,7 @@ def get_next_feeding_cycle(current_time):
     evening_feeding = time_builder(current_time, "evening")
 
     # Check to see if we're counting down to morning or evening
-    current_hour = current_time[3]
-    if current_hour > evening_feeding[3] or current_hour <= morning_feeding[3]:
+    if (current_time < morning_feeding) or (current_time > evening_feeding):
         # Counting down to morning
         return morning_feeding, ("Breakfast", 0)
     else:
@@ -35,21 +34,25 @@ def get_next_feeding_cycle(current_time):
 
 
 def calculate_time_remaining(current_time, target_time):
-    # type: (time.struct_time, time.struct_time) -> Tuple[int, int, int]
+    # type: (time.struct_time, time.struct_time) -> Tuple[int, int, int]  # noqa:F821
     """
     Calculate the total seconds remaining until the target time, as well as the hour/minute split.
 
     `current_time` and `target_time` will be instances of `time.struct_time`
     """
-    # Calculate hour and minute deltas
+    # Calculate minute delta
     mins_remaining = target_time[4] - current_time[4]
     if mins_remaining < 0:
+        # Faux modulo
         mins_remaining += 60
-    # Add minutes to go forward
-    current_time = time.localtime(time.mktime(current_time) + mins_remaining * 60)
 
-    hours_remaining = target_time[3] - current_time[3]
+    # Regenerate the time with the minutes remaining added so we get the correct value for hours
+    next_time = time.localtime(time.mktime(current_time) + mins_remaining * 60)
+
+    # Calculate hour delta
+    hours_remaining = target_time[3] - next_time[3]
     if hours_remaining < 0:
+        # Faux modulo
         hours_remaining += 24
 
     total_sec_remaining = hours_remaining * 60 * 60
