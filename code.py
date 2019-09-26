@@ -1,7 +1,7 @@
 import time
 
 import board
-from CatUtils import calculate_time_remaining, get_next_feeding_cycle
+from CatUtils import calculate_time_remaining, feed_the_cats, get_next_feeding_cycle
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 from adafruit_pyportal import PyPortal
@@ -50,17 +50,24 @@ while True:
 
     current_time = time.localtime()
     target_time, meal_str = get_next_feeding_cycle(current_time)
-    print("Local time: {0:>02}{1:>02}".format(current_time[3], current_time[4]), end=", ")
-    print("Next meal: {0} @ {1:>02}{2:>02}".format(meal_str[0], target_time[3], target_time[4]))
-
     total_sec_remaining, hours_remaining, mins_remaining = calculate_time_remaining(
         current_time, target_time
     )
+    print("Local time: {0:>02}{1:>02}".format(current_time[3], current_time[4]), end=", ")
+    print(
+        "Next meal: {0} @ {1:>02}{2:>02} ({3}s)".format(
+            meal_str[0], target_time[3], target_time[4], total_sec_remaining
+        )
+    )
+
     if total_sec_remaining < FEEDING_THRESHOLD:
         # Activate feeding screen & turn food container
-        print("ACTIVATE FOOD!")
         pyportal.set_background(0xFF0000)
-        time.sleep(FEEDING_THRESHOLD + 10)  # Simulate food time
+        text_areas["middle"].text = "NomNom"
+        text_areas["middle"].x = 0
+        text_areas["bottom"].text = ""
+        feed_the_cats()
+        time.sleep(FEEDING_THRESHOLD * 2)  # Add extra sleep to wait out our time buffer
         pyportal.set_background(BACKGROUND_COLOR)
         continue
     else:

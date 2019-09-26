@@ -1,6 +1,6 @@
 import time
 
-from cat_constants import FEED_TIME
+from cat_constants import FEED_TIME, TRAY_SPIN_SEC
 
 
 def time_builder(in_time, meal):
@@ -58,3 +58,10 @@ def calculate_time_remaining(current_time, target_time):
     total_sec_remaining = hours_remaining * 60 * 60
     total_sec_remaining += mins_remaining * 60
     return total_sec_remaining, hours_remaining, mins_remaining
+
+
+def feed_the_cats():
+    # type: (...) -> None
+    """Activate the food tray."""
+    print("(Mock) Actuating food spinner! Nom nom nom.")
+    time.sleep(TRAY_SPIN_SEC)  # Placeholder until we can get wired up
